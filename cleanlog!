@@ -1,0 +1,6 @@
+#!/bin/bash
+cat /dev/null > ./encode.log 2>/dev/null
+echo -e "Cleared log file...\n"
+exit
+
+

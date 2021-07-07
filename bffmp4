@@ -1,0 +1,168 @@
+#!/bin/bash
+# bffmp4 - Author: B. Shea - 10AUG2011
+####################
+set -o nounset
+set -o errexit
+
+if [[ "$0" =~ ^/ ]]
+then
+SCRIPTPATH=$(readlink -f "$0")
+else
+SCRIPTPATH=$(readlink -f "$(pwd)/""$0")
+fi
+EXECPATH=$(dirname $SCRIPTPATH)
+####################
+# Defines (Can be modified by user)
+#verbosity
+VERB=3
+PROFILE=$EXECPATH/CUSTOM_PRESETS/my-hq.ffpreset
+PROFILEP1=/usr/share/ffmpeg/libx264-fastfirstpass.ffpreset
+PROFILEP2=/usr/share/ffmpeg/libx264-hq.ffpreset
+#PROFILE=/usr/share/ffmpeg/libx264-max.ffpreset
+QPATH=$EXECPATH/QUEUE
+TEMP=$EXECPATH/OUTPUT-TEMP
+COMPLETED=$EXECPATH/COMPLETED
+LOG=$EXECPATH/encode.log
+THREADS="2"
+VBRFILE=${TEMP}/pass1.log
+#(configure video variables below)
+
+####################
+#Set up env
+if [ ! -d $QPATH ]; then
+    mkdir ./${QPATH}/
+fi
+if [ ! -d $TEMP ]; then
+    mkdir ./${TEMP}/
+fi
+if [ ! -d $COMPLETED ]; then
+    mkdir ./${COMPLETED}/
+fi
+
+#
+#FFMPEG Function Calls/etc:
+#
+
+encode_vbr()
+{
+   ffmpeg -i $QNAME -v $VERB -pass 1 -threads $THREADS -passlogfile $PASSLOG -s $SIZE -vcodec libx264 -fpre $PROFILEP1 -b $BITRATE -bt $TOLER -r $FRATE -g $GOP -f mp4 -y /dev/null >> $LOG 2>&1 \
+&& ffmpeg -i $QNAME -v $VERB -pass 2 -threads $THREADS -passlogfile $PASSLOG -s $SIZE -vcodec libx264 -fpre $PROFILEP2 -b $BITRATE -bt $TOLER -r $FRATE -g $GOP -acodec libfaac -ab 128000 -y $OUTPUT >> $LOG 2>&1 \
+&& echo -e "\nRunning QT-Faststart for streaming..." >> $LOG \
+&& qt-faststart $OUTPUT $OUTPUTQT >> $LOG 2>&1 \
+&& rm $OUTPUT  2>> $LOG
+echo -n "End Time: " >> $LOG; echo `date` >> $LOG
+echo -e "----------------------------------------------------------------\n" >> $LOG
+}
+
+encode_cbr()
+{
+ffmpeg -i $QNAME -v $VERB -threads $THREADS -s $SIZE -vcodec libx264 -fpre $PROFILE -b $BITRATE -r $FRATE -g $GOP -crf $CRF -acodec libfaac -ab 128000 -y $OUTPUT >> $LOG 2>&1 \
+&& echo -e "\nRunning QT-Faststart for streaming..." >> $LOG \
+&& qt-faststart $OUTPUT $OUTPUTQT >> $LOG 2>&1 \
+&& rm $OUTPUT  2>> $LOG
+echo -n "End Time: " >> $LOG; echo `date` >> $LOG
+echo -e "----------------------------------------------------------------\n" >> $LOG
+}
+
+encode_jpg()
+{
+echo -e "\nVideo Thumbnail Extraction (JPG 130x96)...\n" >> $LOG
+#Dims = 130x96 - 24 padding total = 106x72)
+ffmpeg -i $QNAME -s 130x72 -vf "pad=130:96:0:12" -ss $GRABTIME -vframes 1 -an -y $COMPLETED/${FNAME}-thumb_1.jpg >> $LOG 2>&1
+echo -e "----------------------------------------------------------------\n" >> $LOG
+}
+
+exitclean()
+{
+echo -e "\nRemoving Lockfile..."
+rm -f $lockfile 2>/dev/null
+echo -e "Cleaning TEMP directory..."
+rm -f $TEMP/* 2>/dev/null
+echo -e "Exiting..."
+exit
+}
+
+####################################
+lockfile=./.lockfile
+if [ ! -e $lockfile ]; then
+   touch $lockfile
+   trap exitclean TERM
+fi
+####################################
+
+inotifywait -m -e create $QPATH | while read FILE
+do
+for video in `ls -1 $QPATH`; do 
+#
+echo -e "\n----------------------------------------------------------------" >> $LOG
+echo -e   "QUEUE ACTIVITY - Starting FFMPEG Encoding Routine" >> $LOG
+echo -e "----------------------------------------------------------------\n" >> $LOG
+echo -n "Start Time: " >> $LOG; echo -e `date` >> $LOG; echo -e "\n" >> $LOG
+#mv $QNAME $TEMP
+#
+#
+FNAME=${video%.*}
+EXT=${video##*.}
+PASSLOG=$TEMP/${FNAME}_pass1.log
+QNAME=$QPATH/$video
+
+# Constant Rate Factor (Only on CBR encodes) 
+# 18 VERY HQ. 23-25 is usually about right with no visual difference.
+CRF=23
+#
+# Next one is Dummy till I can fix script
+# "DO NOT REMOVE OR TOUCH THIS:" :
+SIZE=160x96;  BITRATE=80K; GOP=72; FRATE=24000/1001
+OUTPUT=$TEMP/${FNAME}_${SIZE}.mp4
+OUTPUTQT=$COMPLETED/${FNAME}_${SIZE}qt.mp4
+encode_cbr
+sleep 1
+# "END OF DO NOT TOUCH SECTION."
+#
+# REAL ENCODES/CAPTURES START HERE ...
+# DEFINE HOW MANY TO ENCODE AND SIZES HERE
+##
+# JPG THUMBNAIL (if needed):
+GRABTIME="00:00:05"; encode_jpg
+#
+# Video encode's Start Here:
+SIZE=160x96;  BITRATE=100K; GOP=72; FRATE=24000/1001
+OUTPUT=$TEMP/${FNAME}_${SIZE}.mp4
+OUTPUTQT=$COMPLETED/${FNAME}_${SIZE}qt.mp4
+encode_cbr
+sleep 1
+#
+SIZE=640x368; BITRATE=700K; GOP=72; FRATE=24000/1001
+OUTPUT=$TEMP/${FNAME}_${SIZE}.mp4
+OUTPUTQT=$COMPLETED/${FNAME}_${SIZE}qt.mp4
+encode_cbr
+sleep 1
+#
+SIZE=960x544; BITRATE=1100K; GOP=72; FRATE=24000/1001
+OUTPUT=$TEMP/${FNAME}_${SIZE}.mp4
+OUTPUTQT=$COMPLETED/${FNAME}_${SIZE}qt.mp4
+encode_cbr
+sleep 1
+#
+SIZE=hd720;   BITRATE=2500K;    TOLER=4100K;  GOP=72; FRATE=24000/1001
+OUTPUT=$TEMP/${FNAME}_${SIZE}.mp4
+OUTPUTQT=$COMPLETED/${FNAME}_${SIZE}qt.mp4
+encode_vbr
+sleep 1
+#
+#Done. Clean temp out-
+rm $TEMP/* 2>/dev/null
+SIZE=""; BITRATE=""; THRESHOLD=""; GOP=""; FRAMERATE=""
+
+done
+done
+# End of IF lockfile:
+#   rm $lockfile
+#   trap - INT TERM EXIT
+#else
+#   echo "Cannot exit yet.. FFMpeg will detach.. KILL -9 FFMpeg process and try again!"
+#fi
+
+#   rm $TEMP/* 2>/dev/null
+
+exit

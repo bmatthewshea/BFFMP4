@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# bash
+
+if [ -z $(/bin/ps aux | grep -m 1 '[b]ffmp4' | awk '{print $2}') ] && [ -z $(/bin/ps aux | grep -m 1 '[f]fmpeg' | awk '{print $2}') ]
+then
+echo -e "\nNothing to kill..."; echo ""
+
+else
+
+  if ! [ -z $(/bin/ps aux | grep -m 1 '[b]ffmp4' | awk '{print $2}') ]
+  then
+    zz=$(/bin/ps aux | grep '[b]ffmp4' | awk '{print $2}')
+    echo Killing ${zz}...
+    kill $(/bin/ps aux | grep '[b]ffmp4' | awk '{print $2}') 1>/dev/null
+  fi
+  sleep 1
+
+  if ! [ -z $(/bin/ps aux | grep -m 1 '[b]ffmp4' | awk '{print $2}') ]
+  then
+    kill -9 $(/bin/ps aux | grep '[b]ffmp4' | awk '{print $2}') 1>/dev/null
+  fi
+
+# check for any ffmpegs that detached from script
+  if ! [ -z $(/bin/ps aux | grep -m 1 '[f]fmpeg' | awk '{print $2}') ]
+  then
+    kill $(/bin/ps aux | grep '[f]fmpeg' | awk '{print $2}') 1>/dev/null
+  fi
+  sleep 1
+
+  if ! [ -z $(/bin/ps aux | grep -m 1 '[f]fmpeg' | awk '{print $2}') ]
+  then
+    kill -9 $(/bin/ps aux | grep '[f]fmpeg' | awk '{print $2}') 1>/dev/null
+  fi
+echo "Dead."
+
+fi
+
+./cleanall\!
+echo "Restart with \"bffmp4 &\" or \"nohup bffmp4 &\""; echo ""
+exit
+

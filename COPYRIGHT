@@ -1,0 +1,16 @@
+All works other than scripts included are mine and licensed under:
+ GNU GPLv3 (see LICENSE)
+
+Scripts use (not included):
+http://www.mplayerhq.hu
+http://www.ffmpeg.org/legal.html
+
+Please see there respective licenses and/or HOWTO's for more information.
+
+No compiled binaries or source code from above programs should be distributed
+within this package!
+
+If you see ffmpeg or mplayer binaries included with this script, you are
+not using the original package from me.
+
+-Brady Shea (11AUG2011)

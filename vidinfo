@@ -1,0 +1,12 @@
+#!/bin/bash
+if [ $# -eq 0 ]  # Must have command-line args to demo script.
+then
+echo -e "Usage: ./vidinfo {filename.ext}\n"
+
+else
+
+./mplayer_scripts/midentify.sh $1
+
+fi
+exit
+

@@ -1,0 +1,9 @@
+#!/bin/bash
+echo -e "Cleaning up...\n"
+rm ./COMPLETED/* 2>/dev/null
+rm ./QUEUE/* 2>/dev/null
+rm ./OUTPUT-TEMP/* 2>/dev/null
+rm ./.lockfile 2>/dev/null
+
+exit
+
