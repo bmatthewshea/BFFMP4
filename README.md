@@ -1,5 +1,5 @@
 ##   BASH SCRIPT - FFMpeg Automated MP4 Encoding / Folder Queuing  ##
-Author - Brady Shea - bshea<at>holylinux.net
+Author - Brady Shea - bshea(at)holylinux.net
 
 0. Prereq's
 
