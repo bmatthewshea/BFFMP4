@@ -1,7 +1,7 @@
 # FFMpeg Automated MP4 Encoding / Folder Queuing  #
 
-*Source Language: BASH script*
-*Author - Brady Shea - bshea(at)holylinux.net*
+*Source Language: BASH script*  
+*Author - Brady Shea - bshea(at)holylinux.net*  
 
 #### Prereqs/Deps ####
 
