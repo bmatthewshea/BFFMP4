@@ -1,5 +1,5 @@
-####   BASH SCRIPT - FFMpeg Automated MP4 Encoding   ####
-####   Author - Brady Shea - bshea@holylinux.net     ####
+##   BASH SCRIPT - FFMpeg Automated MP4 Encoding / Folder Queuing  ##
+Author - Brady Shea - bshea<at>holylinux.net
 
 0. Prereq's
 
@@ -12,7 +12,9 @@ b. QT-FASTSTART (May be commented out if not needed.
                  Used for streaming purposes to prep final file)
 
 c. MPLAYER (vidinfo script only - See LICENSE)
-------------------------------------------------------------------------------
+
+#### Installation ####
+
 1. Untar. "tar xvf bffmp4.tar.gz"
 2. Check owner/permissions - "bffmp4" should be 0755 (as well as others)
 3. Edit the 'bffmp4' script variables/sizes to what you need.
@@ -26,9 +28,7 @@ c. MPLAYER (vidinfo script only - See LICENSE)
 
   (nohup shouldn't necessary unless logging out.)
 
-------------------------------------------------------------------------------
-
-NOTES:
+#### NOTES ####
 
 Directories should be auto created on first run.
 
